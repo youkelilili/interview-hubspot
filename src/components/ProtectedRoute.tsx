@@ -13,7 +13,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
-  const { user, loading, userRole } = useAuth();
+  const { user, loading, userRole, hasPermission } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,7 +31,7 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   }
 
   // Check for role-based access if allowedRoles are specified
-  if (user && allowedRoles && userRole && !allowedRoles.includes(userRole)) {
+  if (user && allowedRoles && !hasPermission(allowedRoles)) {
     return (
       <div className="flex items-center justify-center min-h-screen p-4">
         <Alert className="max-w-md">

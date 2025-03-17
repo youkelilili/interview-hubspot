@@ -12,12 +12,14 @@ import Profile from "./pages/Profile";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
+// Admin pages
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import UserManagement from "./pages/admin/UserManagement";
+import RolesManagement from "./pages/admin/RolesManagement";
+
 // Optional: Create placeholder pages that we'll implement later
-const AdminDashboard = () => <div className="p-8">Admin Dashboard (To be implemented)</div>;
 const HRDashboard = () => <div className="p-8">HR Dashboard (To be implemented)</div>;
 const JobSeekerDashboard = () => <div className="p-8">Job Seeker Dashboard (To be implemented)</div>;
-const UsersManagement = () => <div className="p-8">Users Management (To be implemented)</div>;
-const RolesManagement = () => <div className="p-8">Roles Management (To be implemented)</div>;
 const InterviewManagement = () => <div className="p-8">Interview Management (To be implemented)</div>;
 const JobListings = () => <div className="p-8">Job Listings (To be implemented)</div>;
 const Questionnaires = () => <div className="p-8">Questionnaires (To be implemented)</div>;
@@ -52,7 +54,7 @@ const App = () => (
             } />
             <Route path="/admin/users" element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <UsersManagement />
+                <UserManagement />
               </ProtectedRoute>
             } />
             <Route path="/admin/roles" element={
