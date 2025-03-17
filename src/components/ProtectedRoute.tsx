@@ -2,13 +2,18 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+
+type UserRole = 'admin' | 'hr' | 'job_seeker';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  allowedRoles?: UserRole[];
 }
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { user, loading } = useAuth();
+const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
+  const { user, loading, userRole } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -21,6 +26,22 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Check for role-based access if allowedRoles are specified
+  if (user && allowedRoles && userRole && !allowedRoles.includes(userRole)) {
+    return (
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <Alert className="max-w-md">
+          <AlertDescription className="py-4">
+            <p className="mb-4">You don't have permission to access this page.</p>
+            <Button onClick={() => navigate("/")} variant="outline">
+              Return to Home
+            </Button>
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }

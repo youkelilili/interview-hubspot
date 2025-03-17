@@ -9,12 +9,14 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const signupSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required")
+  lastName: z.string().min(1, "Last name is required"),
+  role: z.enum(["admin", "hr", "job_seeker"]).default("job_seeker")
 });
 
 const Signup = () => {
@@ -27,13 +29,20 @@ const Signup = () => {
       email: "",
       password: "",
       firstName: "",
-      lastName: ""
+      lastName: "",
+      role: "job_seeker"
     }
   });
 
   const onSubmit = async (values: z.infer<typeof signupSchema>) => {
     setIsLoading(true);
-    await signUp(values.email, values.password, values.firstName, values.lastName);
+    await signUp(
+      values.email, 
+      values.password, 
+      values.firstName, 
+      values.lastName, 
+      values.role as 'admin' | 'hr' | 'job_seeker'
+    );
     setIsLoading(false);
   };
 
@@ -118,6 +127,28 @@ const Signup = () => {
                       <FormControl>
                         <Input type="password" {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Role</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select your role" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="job_seeker">Job Seeker</SelectItem>
+                          <SelectItem value="hr">HR Professional</SelectItem>
+                          <SelectItem value="admin">System Administrator</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}

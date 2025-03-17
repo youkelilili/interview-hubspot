@@ -5,15 +5,22 @@ import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+type UserRole = 'admin' | 'hr' | 'job_seeker';
+
 type AuthContextType = {
   session: Session | null;
   user: User | null;
-  profile: any | null;
+  profile: Profile | null;
   loading: boolean;
+  userRole: UserRole | null;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, firstName?: string, lastName?: string) => Promise<void>;
+  signUp: (email: string, password: string, firstName?: string, lastName?: string, role?: UserRole) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (profileData: Partial<Profile>) => Promise<void>;
+  isAdmin: () => boolean;
+  isHR: () => boolean;
+  isJobSeeker: () => boolean;
+  hasPermission: (requiredRoles: UserRole[]) => boolean;
 };
 
 type Profile = {
@@ -22,6 +29,7 @@ type Profile = {
   last_name: string | null;
   bio: string | null;
   avatar_url: string | null;
+  role: UserRole;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -54,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await fetchProfile(session.user.id);
         } else {
           setProfile(null);
+          setUserRole(null);
         }
         
         setLoading(false);
@@ -79,10 +89,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       setProfile(data);
+      setUserRole(data.role || 'job_seeker');
     } catch (error) {
       console.error("Error fetching profile:", error);
     }
   }
+
+  const isAdmin = () => userRole === 'admin';
+  const isHR = () => userRole === 'hr';
+  const isJobSeeker = () => userRole === 'job_seeker';
+  
+  const hasPermission = (requiredRoles: UserRole[]) => {
+    if (!userRole) return false;
+    return requiredRoles.includes(userRole);
+  };
 
   async function signIn(email: string, password: string) {
     try {
@@ -103,14 +123,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  async function signUp(email: string, password: string, firstName?: string, lastName?: string) {
+  async function signUp(email: string, password: string, firstName?: string, lastName?: string, role: UserRole = 'job_seeker') {
     try {
       setLoading(true);
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { first_name: firstName, last_name: lastName }
+          data: { first_name: firstName, last_name: lastName, role }
         }
       });
       
@@ -168,10 +188,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     profile,
     loading,
+    userRole,
     signIn,
     signUp,
     signOut,
-    updateProfile
+    updateProfile,
+    isAdmin,
+    isHR,
+    isJobSeeker,
+    hasPermission
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

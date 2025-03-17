@@ -12,6 +12,17 @@ import Profile from "./pages/Profile";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
+// Optional: Create placeholder pages that we'll implement later
+const AdminDashboard = () => <div className="p-8">Admin Dashboard (To be implemented)</div>;
+const HRDashboard = () => <div className="p-8">HR Dashboard (To be implemented)</div>;
+const JobSeekerDashboard = () => <div className="p-8">Job Seeker Dashboard (To be implemented)</div>;
+const UsersManagement = () => <div className="p-8">Users Management (To be implemented)</div>;
+const RolesManagement = () => <div className="p-8">Roles Management (To be implemented)</div>;
+const InterviewManagement = () => <div className="p-8">Interview Management (To be implemented)</div>;
+const JobListings = () => <div className="p-8">Job Listings (To be implemented)</div>;
+const Questionnaires = () => <div className="p-8">Questionnaires (To be implemented)</div>;
+const AIInterview = () => <div className="p-8">AI Interview Module (To be implemented)</div>;
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -25,12 +36,64 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            
+            {/* User Profile - available to all authenticated users */}
             <Route path="/profile" element={
               <ProtectedRoute>
                 <Profile />
               </ProtectedRoute>
             } />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            
+            {/* Admin Routes */}
+            <Route path="/admin" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/users" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <UsersManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/roles" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <RolesManagement />
+              </ProtectedRoute>
+            } />
+            
+            {/* HR Routes */}
+            <Route path="/hr" element={
+              <ProtectedRoute allowedRoles={['admin', 'hr']}>
+                <HRDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/hr/interviews" element={
+              <ProtectedRoute allowedRoles={['admin', 'hr']}>
+                <InterviewManagement />
+              </ProtectedRoute>
+            } />
+            
+            {/* Job Seeker Routes */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <JobSeekerDashboard />
+              </ProtectedRoute>
+            } />
+            
+            {/* Shared Routes with different access levels */}
+            <Route path="/jobs" element={<JobListings />} />
+            <Route path="/questionnaires" element={
+              <ProtectedRoute>
+                <Questionnaires />
+              </ProtectedRoute>
+            } />
+            <Route path="/ai-interview" element={
+              <ProtectedRoute>
+                <AIInterview />
+              </ProtectedRoute>
+            } />
+            
+            {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
