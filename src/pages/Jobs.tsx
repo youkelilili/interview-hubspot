@@ -1,82 +1,85 @@
 
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import JobCard, { JobType } from "@/components/JobCard";
+import JobCard from "@/components/JobCard";
 import JobListSidebar from "@/components/JobListSidebar";
 import { Pagination } from "@/components/ui/pagination";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
-const jobsData: JobType[] = [
-  {
-    id: "1",
-    title: "Senior Frontend Developer",
-    company: "TechCorp Inc.",
-    location: "San Francisco, CA",
-    type: "Full-time",
-    salary: "$120,000 - $150,000",
-    posted: "2 days ago",
-    description: "We're looking for a Senior Frontend Developer with 5+ years of experience in React and modern JavaScript frameworks to join our growing team.",
-  },
-  {
-    id: "2",
-    title: "Product Manager",
-    company: "Innovation Labs",
-    location: "New York, NY",
-    type: "Full-time",
-    salary: "$110,000 - $140,000",
-    posted: "3 days ago",
-    description: "Seeking an experienced Product Manager to drive our product strategy and roadmap. You'll work closely with engineering, design, and marketing teams.",
-  },
-  {
-    id: "3",
-    title: "UX/UI Designer",
-    company: "Creative Solutions",
-    location: "Remote",
-    type: "Remote",
-    salary: "$90,000 - $120,000",
-    posted: "1 week ago",
-    description: "Join our design team to create beautiful, functional user experiences for our suite of products. Experience with Figma and design systems required.",
-  },
-  {
-    id: "4",
-    title: "DevOps Engineer",
-    company: "CloudSystems",
-    location: "Austin, TX",
-    type: "Full-time",
-    salary: "$130,000 - $160,000",
-    posted: "5 days ago",
-    description: "Help us build and maintain our cloud infrastructure, CI/CD pipelines, and security protocols. Experience with AWS, Kubernetes, and Terraform preferred.",
-  },
-  {
-    id: "5",
-    title: "Marketing Specialist",
-    company: "GrowthBrand",
-    location: "Chicago, IL",
-    type: "Part-time",
-    salary: "$60,000 - $80,000",
-    posted: "1 day ago",
-    description: "Looking for a marketing specialist to help drive our content strategy, social media presence, and digital marketing campaigns.",
-  },
-  {
-    id: "6",
-    title: "Backend Developer",
-    company: "DataSystems Inc.",
-    location: "Seattle, WA",
-    type: "Contract",
-    salary: "$50 - $70 per hour",
-    posted: "3 days ago",
-    description: "Join our backend team to develop new APIs and services. Strong experience with Node.js, Python, and database design required.",
-  },
-];
+export type JobType = {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  type: string;
+  salary?: string;
+  description: string;
+  posted: string;
+};
 
 const Jobs = () => {
+  const { isHR, isAdmin } = useAuth();
   const [filters, setFilters] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
+  const { data: jobs, isLoading } = useQuery({
+    queryKey: ["public-jobs"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("jobs")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        toast.error("Failed to load jobs: " + error.message);
+        throw error;
+      }
+      
+      // Transform the data to match JobCard component props
+      return data.map(job => ({
+        id: job.id,
+        title: job.title,
+        company: job.company,
+        location: job.location,
+        type: job.type as "Full-time" | "Part-time" | "Contract" | "Remote",
+        salary: job.salary,
+        posted: formatTimeAgo(job.created_at),
+        description: job.description
+      }));
+    },
+  });
+
+  const formatTimeAgo = (dateString: string) => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (seconds < 60) return "just now";
+    if (seconds < 3600) return `${Math.floor(seconds / 60)} minutes ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
+    if (seconds < 604800) return `${Math.floor(seconds / 86400)} days ago`;
+    if (seconds < 2592000) return `${Math.floor(seconds / 604800)} weeks ago`;
+    
+    return new Date(dateString).toLocaleDateString();
+  };
 
   const handleFilter = (newFilters: any) => {
     setFilters(newFilters);
+    setCurrentPage(1);
     // In a real app, this would filter the jobs based on the criteria
   };
+
+  // Pagination logic
+  const totalPages = jobs ? Math.ceil(jobs.length / itemsPerPage) : 0;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentJobs = jobs ? jobs.slice(startIndex, endIndex) : [];
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -89,9 +92,14 @@ const Jobs = () => {
               <h1 className="text-3xl font-bold text-gray-900">Job Openings</h1>
               <p className="mt-1 text-gray-600">Find your perfect role from our open positions</p>
             </div>
-            <Button className="mt-4 md:mt-0 bg-brand-700 hover:bg-brand-800 text-white">
-              Post a Job
-            </Button>
+            {(isHR() || isAdmin()) && (
+              <Button 
+                className="mt-4 md:mt-0 bg-brand-700 hover:bg-brand-800 text-white"
+                onClick={() => window.location.href = "/hr/jobs"}
+              >
+                Manage Jobs
+              </Button>
+            )}
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -100,35 +108,40 @@ const Jobs = () => {
             </div>
             
             <div className="lg:col-span-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {jobsData.map((job) => (
-                  <JobCard key={job.id} job={job} />
-                ))}
-              </div>
+              {isLoading ? (
+                <div className="flex justify-center items-center h-64">
+                  <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
+                </div>
+              ) : currentJobs && currentJobs.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {currentJobs.map((job) => (
+                    <JobCard key={job.id} job={job} />
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-white rounded-lg shadow-sm p-6 text-center">
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No job listings found</h3>
+                  <p className="text-gray-600">Please check back later for new opportunities.</p>
+                </div>
+              )}
               
-              <div className="mt-8 flex justify-center">
-                <Pagination>
-                  <Button 
-                    variant="outline" 
-                    className="hidden h-8 w-8 p-0 sm:flex items-center justify-center"
-                    disabled={true}
-                  >
-                    1
-                  </Button>
-                  <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                    2
-                  </Button>
-                  <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                    3
-                  </Button>
-                  <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                    4
-                  </Button>
-                  <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                    5
-                  </Button>
-                </Pagination>
-              </div>
+              {totalPages > 1 && (
+                <div className="mt-8 flex justify-center">
+                  <Pagination>
+                    {Array.from({ length: totalPages }).map((_, index) => (
+                      <Button 
+                        key={index}
+                        variant={currentPage === index + 1 ? "default" : "outline"} 
+                        size="sm" 
+                        className="h-8 w-8 p-0"
+                        onClick={() => setCurrentPage(index + 1)}
+                      >
+                        {index + 1}
+                      </Button>
+                    ))}
+                  </Pagination>
+                </div>
+              )}
             </div>
           </div>
         </div>

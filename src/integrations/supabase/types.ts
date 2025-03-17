@@ -9,6 +9,57 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      jobs: {
+        Row: {
+          benefits: string | null
+          company: string
+          created_at: string
+          created_by: string
+          deadline: string | null
+          description: string
+          id: string
+          is_active: boolean
+          location: string
+          requirements: string | null
+          salary: string | null
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          benefits?: string | null
+          company: string
+          created_at?: string
+          created_by: string
+          deadline?: string | null
+          description: string
+          id?: string
+          is_active?: boolean
+          location: string
+          requirements?: string | null
+          salary?: string | null
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          benefits?: string | null
+          company?: string
+          created_at?: string
+          created_by?: string
+          deadline?: string | null
+          description?: string
+          id?: string
+          is_active?: boolean
+          location?: string
+          requirements?: string | null
+          salary?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

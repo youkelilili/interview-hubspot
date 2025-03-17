@@ -9,6 +9,8 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
+import Jobs from "./pages/Jobs";
+import JobDetail from "./pages/JobDetail";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -17,11 +19,13 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import UserManagement from "./pages/admin/UserManagement";
 import RolesManagement from "./pages/admin/RolesManagement";
 
+// HR pages
+import HRDashboard from "./pages/hr/HRDashboard";
+import JobManagement from "./pages/hr/JobManagement";
+import InterviewManagement from "./pages/hr/InterviewManagement";
+
 // Optional: Create placeholder pages that we'll implement later
-const HRDashboard = () => <div className="p-8">HR Dashboard (To be implemented)</div>;
 const JobSeekerDashboard = () => <div className="p-8">Job Seeker Dashboard (To be implemented)</div>;
-const InterviewManagement = () => <div className="p-8">Interview Management (To be implemented)</div>;
-const JobListings = () => <div className="p-8">Job Listings (To be implemented)</div>;
 const Questionnaires = () => <div className="p-8">Questionnaires (To be implemented)</div>;
 const AIInterview = () => <div className="p-8">AI Interview Module (To be implemented)</div>;
 
@@ -69,6 +73,11 @@ const App = () => (
                 <HRDashboard />
               </ProtectedRoute>
             } />
+            <Route path="/hr/jobs" element={
+              <ProtectedRoute allowedRoles={['admin', 'hr']}>
+                <JobManagement />
+              </ProtectedRoute>
+            } />
             <Route path="/hr/interviews" element={
               <ProtectedRoute allowedRoles={['admin', 'hr']}>
                 <InterviewManagement />
@@ -82,8 +91,11 @@ const App = () => (
               </ProtectedRoute>
             } />
             
+            {/* Public Job Routes */}
+            <Route path="/jobs" element={<Jobs />} />
+            <Route path="/jobs/:id" element={<JobDetail />} />
+            
             {/* Shared Routes with different access levels */}
-            <Route path="/jobs" element={<JobListings />} />
             <Route path="/questionnaires" element={
               <ProtectedRoute>
                 <Questionnaires />
