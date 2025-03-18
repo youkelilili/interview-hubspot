@@ -12,6 +12,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Plus, Filter } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
+// Define types for our Supabase candidates table
+type CandidateFromDB = {
+  id: string;
+  name: string;
+  email: string;
+  position: string | null;
+  status: string;
+  applied_date: string;
+  avatar_url: string | null;
+  tags: string[] | null;
+  created_at: string;
+  updated_at: string;
+}
+
 const Candidates = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentTab, setCurrentTab] = useState("all");
@@ -23,14 +37,14 @@ const Candidates = () => {
       const { data, error } = await supabase
         .from("candidates")
         .select("*")
-        .order("applied_date", { ascending: false });
+        .order("applied_date", { ascending: false }) as { data: CandidateFromDB[] | null, error: any };
 
       if (error) {
         toast.error("Failed to load candidates: " + error.message);
         throw error;
       }
       
-      return data.map(candidate => ({
+      return (data || []).map(candidate => ({
         id: candidate.id,
         name: candidate.name,
         email: candidate.email,
