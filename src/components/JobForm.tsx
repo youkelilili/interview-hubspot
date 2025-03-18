@@ -75,14 +75,13 @@ const JobForm = ({ job, onSuccess, userId }: JobFormProps) => {
         throw new Error("User not authenticated");
       }
 
+      // Fix: Pass a single object instead of an array of objects to insert
       const { data, error } = await supabase
         .from("jobs")
-        .insert([
-          {
-            ...values,
-            created_by: userId,
-          },
-        ])
+        .insert({
+          ...values,
+          created_by: userId,
+        })
         .select();
 
       if (error) throw error;

@@ -57,6 +57,15 @@ type UserProfile = {
   created_at: string;
 };
 
+// Define a type for the auth users list response
+type AuthUsersList = {
+  users: Array<{
+    id: string;
+    email?: string;
+    created_at?: string;
+  }>;
+};
+
 const UserManagement = () => {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
@@ -88,11 +97,14 @@ const UserManagement = () => {
       }
       
       // Get all auth users (admin only)
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      const { data: authUsersData, error: authError } = await supabase.auth.admin.listUsers();
       
       if (authError) {
         throw authError;
       }
+      
+      // Fix: Properly type the auth users data
+      const authUsers = authUsersData as unknown as AuthUsersList;
       
       // Combine the data
       const combinedUsers = profiles.map(profile => {
