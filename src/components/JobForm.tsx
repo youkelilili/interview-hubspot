@@ -34,6 +34,21 @@ const jobSchema = z.object({
 
 type JobFormValues = z.infer<typeof jobSchema>;
 
+// Type for inserting into Supabase jobs table
+type JobInsert = {
+  title: string;
+  company: string;
+  location: string;
+  type: string;
+  description: string;
+  created_by: string;
+  salary?: string;
+  requirements?: string;
+  benefits?: string;
+  deadline?: string;
+  is_active: boolean;
+};
+
 interface JobFormProps {
   job?: Job;
   onSuccess: () => void;
@@ -75,13 +90,26 @@ const JobForm = ({ job, onSuccess, userId }: JobFormProps) => {
         throw new Error("User not authenticated");
       }
 
-      // Fix: Pass a single object instead of an array of objects to insert
+      // Create a properly typed object for Supabase insert
+      const jobData: JobInsert = {
+        title: values.title,
+        company: values.company,
+        location: values.location,
+        type: values.type,
+        description: values.description,
+        created_by: userId,
+        is_active: values.is_active,
+      };
+      
+      // Add optional fields only if they exist
+      if (values.salary) jobData.salary = values.salary;
+      if (values.requirements) jobData.requirements = values.requirements;
+      if (values.benefits) jobData.benefits = values.benefits;
+      if (values.deadline) jobData.deadline = values.deadline;
+
       const { data, error } = await supabase
         .from("jobs")
-        .insert({
-          ...values,
-          created_by: userId,
-        })
+        .insert(jobData)
         .select();
 
       if (error) throw error;
@@ -105,9 +133,25 @@ const JobForm = ({ job, onSuccess, userId }: JobFormProps) => {
         throw new Error("Job not found");
       }
 
+      // Create a properly typed object for Supabase update
+      const updateData: Partial<JobInsert> = {
+        title: values.title,
+        company: values.company,
+        location: values.location,
+        type: values.type,
+        description: values.description,
+        is_active: values.is_active,
+      };
+      
+      // Add optional fields only if they exist
+      if (values.salary) updateData.salary = values.salary;
+      if (values.requirements) updateData.requirements = values.requirements;
+      if (values.benefits) updateData.benefits = values.benefits;
+      if (values.deadline) updateData.deadline = values.deadline;
+
       const { data, error } = await supabase
         .from("jobs")
-        .update(values)
+        .update(updateData)
         .eq("id", job.id)
         .select();
 
