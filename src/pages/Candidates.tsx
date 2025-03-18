@@ -50,12 +50,34 @@ const Candidates = () => {
         email: candidate.email,
         avatar: candidate.avatar_url,
         position: candidate.position || "",
-        status: candidate.status,
+        // Ensure the status matches one of the allowed values in CandidateType
+        status: mapStatusToAllowedType(candidate.status),
         appliedDate: formatTimeAgo(candidate.applied_date),
         tags: candidate.tags || [],
       }));
     },
   });
+
+  // Helper function to map any status string to one of the allowed CandidateType status values
+  const mapStatusToAllowedType = (status: string): CandidateType["status"] => {
+    // Convert to lowercase and capitalize first letter for consistency
+    const formattedStatus = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+    
+    // Check if the status is one of the allowed values
+    switch (formattedStatus) {
+      case "New":
+      case "Screening":
+      case "Interview":
+      case "Final Round":
+      case "Offer":
+      case "Rejected":
+        return formattedStatus as CandidateType["status"];
+      // Default to "New" if the status doesn't match any allowed value
+      default:
+        console.warn(`Invalid status: "${status}" mapped to "New"`);
+        return "New";
+    }
+  };
 
   const formatTimeAgo = (dateString?: string) => {
     if (!dateString) return "Unknown";
