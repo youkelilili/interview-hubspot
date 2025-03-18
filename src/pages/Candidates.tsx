@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Plus, Filter } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Define types for our Supabase candidates table
 type CandidateFromDB = {
@@ -31,19 +32,22 @@ const Candidates = () => {
   const [currentTab, setCurrentTab] = useState("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
-  const { data: candidates, isLoading } = useQuery({
+  const { data: candidates, isLoading, error } = useQuery({
     queryKey: ["candidates"],
     queryFn: async () => {
+      console.log("Fetching candidates...");
       const { data, error } = await supabase
         .from("candidates")
         .select("*")
         .order("applied_date", { ascending: false }) as { data: CandidateFromDB[] | null, error: any };
 
       if (error) {
+        console.error("Error fetching candidates:", error);
         toast.error("Failed to load candidates: " + error.message);
         throw error;
       }
       
+      console.log("Candidates data:", data);
       return (data || []).map(candidate => ({
         id: candidate.id,
         name: candidate.name,
@@ -106,6 +110,28 @@ const Candidates = () => {
     ? filteredCandidates 
     : filteredCandidates.filter(c => c.status.toLowerCase() === currentTab.toLowerCase());
 
+  if (error) {
+    console.error("Rendering error state:", error);
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-grow flex items-center justify-center bg-gray-50">
+          <div className="text-center p-8 bg-white rounded-lg shadow-sm max-w-md">
+            <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading Candidates</h2>
+            <p className="text-gray-700 mb-4">{error.message || "There was a problem loading the candidates data."}</p>
+            <Button 
+              onClick={() => window.location.reload()}
+              className="bg-brand-700 hover:bg-brand-800 text-white"
+            >
+              Try Again
+            </Button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -155,8 +181,12 @@ const Candidates = () => {
             
             <TabsContent value="all" className="mt-6">
               {isLoading ? (
-                <div className="flex justify-center items-center h-64">
-                  <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[1, 2, 3, 4, 5, 6].map((item) => (
+                    <div key={item} className="h-64">
+                      <Skeleton className="h-full w-full" />
+                    </div>
+                  ))}
                 </div>
               ) : displayCandidates.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -174,8 +204,12 @@ const Candidates = () => {
             {["new", "screening", "interview", "final round", "offer"].map((tab) => (
               <TabsContent key={tab} value={tab} className="mt-6">
                 {isLoading ? (
-                  <div className="flex justify-center items-center h-64">
-                    <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[1, 2, 3].map((item) => (
+                      <div key={item} className="h-64">
+                        <Skeleton className="h-full w-full" />
+                      </div>
+                    ))}
                   </div>
                 ) : displayCandidates.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
