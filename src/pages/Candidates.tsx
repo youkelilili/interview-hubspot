@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CandidateCard, { CandidateType } from "@/components/CandidateCard";
@@ -7,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Plus, Filter } from "lucide-react";
 
+// Enhanced dummy data with more realistic information
 const candidatesData: CandidateType[] = [
   {
     id: "1",
@@ -68,9 +70,86 @@ const candidatesData: CandidateType[] = [
     appliedDate: "3 days ago",
     tags: ["Node.js", "Python", "Databases"],
   },
+  {
+    id: "7",
+    name: "Riley Morgan",
+    email: "riley.morgan@example.com",
+    avatar: undefined,
+    position: "Data Scientist",
+    status: "New",
+    appliedDate: "4 days ago",
+    tags: ["Python", "Machine Learning", "Statistics"],
+  },
+  {
+    id: "8",
+    name: "Sam Peterson",
+    email: "sam.peterson@example.com",
+    avatar: undefined,
+    position: "Project Manager",
+    status: "Interview",
+    appliedDate: "6 days ago",
+    tags: ["Agile", "Scrum", "JIRA"],
+  },
+  {
+    id: "9",
+    name: "Drew Mitchell",
+    email: "drew.mitchell@example.com",
+    avatar: undefined,
+    position: "Mobile Developer",
+    status: "Final Round",
+    appliedDate: "2 weeks ago",
+    tags: ["React Native", "Swift", "Mobile UX"],
+  },
+  {
+    id: "10",
+    name: "Quinn Roberts",
+    email: "quinn.roberts@example.com",
+    avatar: undefined,
+    position: "QA Engineer",
+    status: "Screening",
+    appliedDate: "3 days ago",
+    tags: ["Test Automation", "Selenium", "QA Processes"],
+  },
+  {
+    id: "11",
+    name: "Avery Williams",
+    email: "avery.williams@example.com",
+    avatar: undefined,
+    position: "Technical Writer",
+    status: "New",
+    appliedDate: "1 day ago",
+    tags: ["Documentation", "API Docs", "Technical Communication"],
+  },
+  {
+    id: "12",
+    name: "Harper Jones",
+    email: "harper.jones@example.com",
+    avatar: undefined,
+    position: "Systems Analyst",
+    status: "Offer",
+    appliedDate: "1 week ago",
+    tags: ["System Architecture", "Business Analysis", "Requirements Gathering"],
+  },
 ];
 
 const Candidates = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentTab, setCurrentTab] = useState("all");
+
+  // Filter candidates based on search term
+  const filteredCandidates = candidatesData.filter(candidate => {
+    return (
+      candidate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      candidate.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      candidate.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  });
+
+  // Filter candidates based on tab selection
+  const displayCandidates = currentTab === "all" 
+    ? filteredCandidates 
+    : filteredCandidates.filter(c => c.status.toLowerCase() === currentTab.toLowerCase());
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -95,6 +174,8 @@ const Candidates = () => {
                   type="text"
                   placeholder="Search candidates by name, role, or skills"
                   className="pl-9"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
               <Button variant="outline" className="flex items-center">
@@ -103,7 +184,7 @@ const Candidates = () => {
             </div>
           </div>
           
-          <Tabs defaultValue="all" className="mb-6">
+          <Tabs defaultValue="all" className="mb-6" onValueChange={setCurrentTab}>
             <TabsList className="grid grid-cols-6 w-full max-w-2xl">
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="new">New</TabsTrigger>
@@ -114,44 +195,80 @@ const Candidates = () => {
             </TabsList>
             <TabsContent value="all" className="mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {candidatesData.map((candidate) => (
-                  <CandidateCard key={candidate.id} candidate={candidate} />
-                ))}
+                {displayCandidates.length > 0 ? (
+                  displayCandidates.map((candidate) => (
+                    <CandidateCard key={candidate.id} candidate={candidate} />
+                  ))
+                ) : (
+                  <div className="col-span-3 text-center py-10">
+                    <p className="text-gray-500">No candidates match your search criteria.</p>
+                  </div>
+                )}
               </div>
             </TabsContent>
             <TabsContent value="new" className="mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {candidatesData.filter(c => c.status === "New").map((candidate) => (
-                  <CandidateCard key={candidate.id} candidate={candidate} />
-                ))}
+                {displayCandidates.length > 0 ? (
+                  displayCandidates.map((candidate) => (
+                    <CandidateCard key={candidate.id} candidate={candidate} />
+                  ))
+                ) : (
+                  <div className="col-span-3 text-center py-10">
+                    <p className="text-gray-500">No new candidates found.</p>
+                  </div>
+                )}
               </div>
             </TabsContent>
             <TabsContent value="screening" className="mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {candidatesData.filter(c => c.status === "Screening").map((candidate) => (
-                  <CandidateCard key={candidate.id} candidate={candidate} />
-                ))}
+                {displayCandidates.length > 0 ? (
+                  displayCandidates.map((candidate) => (
+                    <CandidateCard key={candidate.id} candidate={candidate} />
+                  ))
+                ) : (
+                  <div className="col-span-3 text-center py-10">
+                    <p className="text-gray-500">No candidates in screening stage.</p>
+                  </div>
+                )}
               </div>
             </TabsContent>
             <TabsContent value="interview" className="mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {candidatesData.filter(c => c.status === "Interview").map((candidate) => (
-                  <CandidateCard key={candidate.id} candidate={candidate} />
-                ))}
+                {displayCandidates.length > 0 ? (
+                  displayCandidates.map((candidate) => (
+                    <CandidateCard key={candidate.id} candidate={candidate} />
+                  ))
+                ) : (
+                  <div className="col-span-3 text-center py-10">
+                    <p className="text-gray-500">No candidates in interview stage.</p>
+                  </div>
+                )}
               </div>
             </TabsContent>
             <TabsContent value="final" className="mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {candidatesData.filter(c => c.status === "Final Round").map((candidate) => (
-                  <CandidateCard key={candidate.id} candidate={candidate} />
-                ))}
+                {displayCandidates.length > 0 ? (
+                  displayCandidates.map((candidate) => (
+                    <CandidateCard key={candidate.id} candidate={candidate} />
+                  ))
+                ) : (
+                  <div className="col-span-3 text-center py-10">
+                    <p className="text-gray-500">No candidates in final round.</p>
+                  </div>
+                )}
               </div>
             </TabsContent>
             <TabsContent value="offer" className="mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {candidatesData.filter(c => c.status === "Offer").map((candidate) => (
-                  <CandidateCard key={candidate.id} candidate={candidate} />
-                ))}
+                {displayCandidates.length > 0 ? (
+                  displayCandidates.map((candidate) => (
+                    <CandidateCard key={candidate.id} candidate={candidate} />
+                  ))
+                ) : (
+                  <div className="col-span-3 text-center py-10">
+                    <p className="text-gray-500">No candidates with offers.</p>
+                  </div>
+                )}
               </div>
             </TabsContent>
           </Tabs>
