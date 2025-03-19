@@ -11,7 +11,7 @@ import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
 import Jobs from "./pages/Jobs";
 import JobDetail from "./pages/JobDetail";
-import { AuthProvider } from "./contexts/AuthContext";
+import { CombinedAuthProvider } from "./contexts/CombinedAuthProvider";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 // Admin pages
@@ -39,7 +39,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthProvider>
+        <CombinedAuthProvider>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
@@ -112,7 +112,7 @@ const App = () => (
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </AuthProvider>
+        </CombinedAuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
