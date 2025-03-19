@@ -1,10 +1,9 @@
 
 import { useState, useEffect } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,8 +37,11 @@ const Login = () => {
         navigate("/admin");
       } else if (userRole === 'hr') {
         navigate("/hr");
-      } else {
+      } else if (userRole === 'job_seeker') {
         navigate("/dashboard");
+      } else {
+        // Default fallback
+        navigate("/");
       }
     }
   }, [user, userRole, loading, navigate]);

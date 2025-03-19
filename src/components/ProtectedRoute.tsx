@@ -23,20 +23,22 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
       return;
     }
 
-    // Only redirect if no specific roles are required for this route
-    // This prevents unwanted redirects when accessing a role-specific page
-    if (!loading && user && !allowedRoles) {
-      console.log("User is logged in, userRole:", userRole);
-      // Redirect users after login based on their role
+    // Only check for access permission when allowedRoles are specified
+    if (!loading && user && allowedRoles && !hasPermission(allowedRoles)) {
+      console.log("Permission denied. User role:", userRole, "Required roles:", allowedRoles);
+      // Redirect users to their appropriate dashboard based on role
       if (userRole === 'admin') {
         navigate("/admin");
       } else if (userRole === 'hr') {
         navigate("/hr");
       } else if (userRole === 'job_seeker') {
         navigate("/dashboard");
+      } else {
+        navigate("/");
       }
+      return;
     }
-  }, [user, loading, navigate, userRole, allowedRoles]);
+  }, [user, loading, navigate, userRole, allowedRoles, hasPermission]);
 
   if (loading) {
     return (
@@ -60,7 +62,7 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
               } else if (userRole === 'hr') {
                 navigate("/hr");
               } else {
-                navigate("/");
+                navigate("/dashboard");
               }
             }} variant="outline">
               Return to Dashboard

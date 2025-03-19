@@ -93,6 +93,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log("Profile data:", data);
       setProfile(data);
       setUserRole(data.role || 'job_seeker');
+      
+      // Log role for debugging
+      console.log("User role set to:", data.role || 'job_seeker');
     } catch (error) {
       console.error("Error fetching profile:", error);
     }
@@ -158,7 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       console.log("Auth signup successful:", authData.user.id);
       
-      // Manually create/update the profile since the trigger might not have worked
+      // Manually create/update the profile
       const { error: profileError } = await supabase
         .from("profiles")
         .upsert({
@@ -166,8 +169,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           first_name: firstName || null,
           last_name: lastName || null,
           role: role
-        })
-        .select();
+        });
       
       if (profileError) {
         console.error("Error updating profile:", profileError);
