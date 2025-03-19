@@ -24,8 +24,10 @@ import HRDashboard from "./pages/hr/HRDashboard";
 import JobManagement from "./pages/hr/JobManagement";
 import InterviewManagement from "./pages/hr/InterviewManagement";
 
+// JobSeeker pages
+import JobSeekerDashboard from "./pages/jobseeker/JobSeekerDashboard";
+
 // Optional: Create placeholder pages that we'll implement later
-const JobSeekerDashboard = () => <div className="p-8">Job Seeker Dashboard (To be implemented)</div>;
 const Questionnaires = () => <div className="p-8">Questionnaires (To be implemented)</div>;
 const AIInterview = () => <div className="p-8">AI Interview Module (To be implemented)</div>;
 
@@ -86,7 +88,7 @@ const App = () => (
             
             {/* Job Seeker Routes */}
             <Route path="/dashboard" element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['job_seeker']}>
                 <JobSeekerDashboard />
               </ProtectedRoute>
             } />
