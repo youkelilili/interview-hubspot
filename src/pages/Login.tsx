@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { toast } from "sonner";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -17,8 +18,9 @@ const loginSchema = z.object({
 });
 
 const Login = () => {
-  const { signIn, user, loading } = useAuth();
+  const { signIn, user, userRole, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -30,13 +32,26 @@ const Login = () => {
 
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
-    await signIn(values.email, values.password);
-    setIsLoading(false);
+    try {
+      await signIn(values.email, values.password);
+      toast.success("Login successful");
+    } catch (error: any) {
+      console.error("Login error:", error);
+      toast.error(error.message || "Failed to sign in");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Redirect if user is already logged in
   if (user && !loading) {
-    return <Navigate to="/" />;
+    if (userRole === 'admin') {
+      return <Navigate to="/admin" />;
+    } else if (userRole === 'hr') {
+      return <Navigate to="/hr" />;
+    } else {
+      return <Navigate to="/dashboard" />;
+    }
   }
 
   return (

@@ -19,8 +19,21 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   useEffect(() => {
     if (!loading && !user) {
       navigate("/login");
+      return;
     }
-  }, [user, loading, navigate]);
+
+    // Redirect users after login based on their role
+    if (!loading && user && !allowedRoles) {
+      // If no specific roles are required but user is authenticated
+      if (userRole === 'admin') {
+        navigate("/admin");
+      } else if (userRole === 'hr') {
+        navigate("/hr");
+      } else if (userRole === 'job_seeker') {
+        navigate("/dashboard");
+      }
+    }
+  }, [user, loading, navigate, userRole, allowedRoles]);
 
   if (loading) {
     return (
@@ -37,8 +50,16 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
         <Alert className="max-w-md">
           <AlertDescription className="py-4">
             <p className="mb-4">You don't have permission to access this page.</p>
-            <Button onClick={() => navigate("/")} variant="outline">
-              Return to Home
+            <Button onClick={() => {
+              if (userRole === 'admin') {
+                navigate("/admin");
+              } else if (userRole === 'hr') {
+                navigate("/hr");
+              } else {
+                navigate("/");
+              }
+            }} variant="outline">
+              Return to Dashboard
             </Button>
           </AlertDescription>
         </Alert>
