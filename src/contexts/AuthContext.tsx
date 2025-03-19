@@ -56,6 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -77,6 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function fetchProfile(userId: string) {
     try {
+      console.log("Fetching profile for user:", userId);
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -88,6 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      console.log("Profile data:", data);
       setProfile(data);
       setUserRole(data.role || 'job_seeker');
     } catch (error) {
@@ -114,7 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       
-      navigate("/");
+      // Redirect will happen after onAuthStateChange updates the profile and userRole
       toast.success("Signed in successfully");
     } catch (error: any) {
       toast.error(error.message || "An error occurred during sign in");
@@ -125,23 +128,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function signUp(email: string, password: string, firstName?: string, lastName?: string, role: UserRole = 'job_seeker') {
     try {
+      console.log("Signing up with:", email, firstName, lastName, role);
       setLoading(true);
-      const { error } = await supabase.auth.signUp({
+      
+      // Sign up the user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { first_name: firstName, last_name: lastName, role }
+          data: { 
+            first_name: firstName, 
+            last_name: lastName, 
+            role 
+          }
         }
       });
       
-      if (error) {
-        toast.error(error.message);
+      if (authError) {
+        console.error("Auth error during signup:", authError);
+        toast.error(authError.message);
         return;
+      }
+      
+      if (!authData.user) {
+        console.error("No user returned from signup");
+        toast.error("Failed to create user account");
+        return;
+      }
+      
+      console.log("Auth signup successful:", authData.user.id);
+      
+      // Manually create/update the profile since the trigger might not have worked
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .upsert({
+          id: authData.user.id,
+          first_name: firstName || null,
+          last_name: lastName || null,
+          role: role
+        })
+        .select();
+      
+      if (profileError) {
+        console.error("Error updating profile:", profileError);
+        toast.error("Account created but profile setup failed");
+      } else {
+        console.log("Profile created/updated successfully for user:", authData.user.id);
       }
       
       navigate("/");
       toast.success("Account created successfully. Please check your email for verification.");
     } catch (error: any) {
+      console.error("Error during signup:", error);
       toast.error(error.message || "An error occurred during sign up");
     } finally {
       setLoading(false);

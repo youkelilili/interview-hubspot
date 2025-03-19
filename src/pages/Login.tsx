@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -30,11 +30,25 @@ const Login = () => {
     }
   });
 
+  useEffect(() => {
+    // Handle redirects based on role when userRole is set after login
+    if (user && userRole && !loading) {
+      console.log("Login: redirecting based on role", userRole);
+      if (userRole === 'admin') {
+        navigate("/admin");
+      } else if (userRole === 'hr') {
+        navigate("/hr");
+      } else {
+        navigate("/dashboard");
+      }
+    }
+  }, [user, userRole, loading, navigate]);
+
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
     try {
       await signIn(values.email, values.password);
-      toast.success("Login successful");
+      // Redirect will happen in the useEffect based on role
     } catch (error: any) {
       console.error("Login error:", error);
       toast.error(error.message || "Failed to sign in");
@@ -43,15 +57,13 @@ const Login = () => {
     }
   };
 
-  // Redirect if user is already logged in
-  if (user && !loading) {
-    if (userRole === 'admin') {
-      return <Navigate to="/admin" />;
-    } else if (userRole === 'hr') {
-      return <Navigate to="/hr" />;
-    } else {
-      return <Navigate to="/dashboard" />;
-    }
+  // Don't redirect here - let the useEffect handle redirects after userRole is loaded
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   return (

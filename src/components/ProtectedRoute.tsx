@@ -18,13 +18,16 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
 
   useEffect(() => {
     if (!loading && !user) {
+      console.log("No user logged in, redirecting to login");
       navigate("/login");
       return;
     }
 
-    // Redirect users after login based on their role
+    // Only redirect if no specific roles are required for this route
+    // This prevents unwanted redirects when accessing a role-specific page
     if (!loading && user && !allowedRoles) {
-      // If no specific roles are required but user is authenticated
+      console.log("User is logged in, userRole:", userRole);
+      // Redirect users after login based on their role
       if (userRole === 'admin') {
         navigate("/admin");
       } else if (userRole === 'hr') {
@@ -45,6 +48,7 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
 
   // Check for role-based access if allowedRoles are specified
   if (user && allowedRoles && !hasPermission(allowedRoles)) {
+    console.log("Permission denied. User role:", userRole, "Required roles:", allowedRoles);
     return (
       <div className="flex items-center justify-center min-h-screen p-4">
         <Alert className="max-w-md">
