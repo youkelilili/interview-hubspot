@@ -21,11 +21,11 @@ const Navbar = () => {
             <Link to="/jobs" className="text-gray-600 hover:text-brand-700">
               Jobs
             </Link>
-            <Link to="/candidates" className="text-gray-600 hover:text-brand-700">
-              Candidates
+            <Link to="/ai-interview" className="text-gray-600 hover:text-brand-700">
+              AI Interview
             </Link>
-            <Link to="/about" className="text-gray-600 hover:text-brand-700">
-              About
+            <Link to="/questionnaires" className="text-gray-600 hover:text-brand-700">
+              Assessments
             </Link>
           </div>
         </div>
@@ -86,18 +86,18 @@ const Navbar = () => {
               Jobs
             </Link>
             <Link 
-              to="/candidates" 
+              to="/ai-interview" 
               className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-brand-700 hover:bg-brand-50"
               onClick={() => setIsMenuOpen(false)}
             >
-              Candidates
+              AI Interview
             </Link>
             <Link 
-              to="/about" 
+              to="/questionnaires" 
               className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-brand-700 hover:bg-brand-50"
               onClick={() => setIsMenuOpen(false)}
             >
-              About
+              Assessments
             </Link>
             
             {user ? (
