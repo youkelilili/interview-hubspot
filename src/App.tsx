@@ -23,6 +23,8 @@ import RolesManagement from "./pages/admin/RolesManagement";
 import HRDashboard from "./pages/hr/HRDashboard";
 import JobManagement from "./pages/hr/JobManagement";
 import InterviewManagement from "./pages/hr/InterviewManagement";
+import AssessmentManagement from "./pages/hr/AssessmentManagement";
+import AssessmentEditor from "./pages/hr/AssessmentEditor";
 
 // JobSeeker pages
 import JobSeekerDashboard from "./pages/jobseeker/JobSeekerDashboard";
@@ -83,6 +85,16 @@ const App = () => (
             <Route path="/hr/interviews" element={
               <ProtectedRoute allowedRoles={['admin', 'hr']}>
                 <InterviewManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/hr/assessments" element={
+              <ProtectedRoute allowedRoles={['admin', 'hr']}>
+                <AssessmentManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/hr/assessments/:id/edit" element={
+              <ProtectedRoute allowedRoles={['admin', 'hr']}>
+                <AssessmentEditor />
               </ProtectedRoute>
             } />
             

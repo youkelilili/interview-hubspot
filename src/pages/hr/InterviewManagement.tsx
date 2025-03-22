@@ -157,11 +157,18 @@ const InterviewManagement = () => {
         if (interview.id === selectedInterview.id) {
           const assessment = availableAssessments.find(a => a.id === selectedAssessment);
           if (assessment) {
+            const newAssessment: Assessment = {
+              id: assessment.id,
+              title: assessment.title,
+              assessmentType: assessment.assessmentType,
+              status: "pending"
+            };
+            
             return {
               ...interview,
               assessments: [
                 ...(interview.assessments || []),
-                { ...assessment, status: "pending" }
+                newAssessment
               ]
             };
           }
