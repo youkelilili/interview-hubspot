@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +29,6 @@ const Login = () => {
   });
 
   useEffect(() => {
-    // Handle redirects based on role when userRole is set after login
     if (user && userRole && !loading) {
       console.log("Login: redirecting based on role", userRole);
       if (userRole === 'admin') {
@@ -40,7 +38,6 @@ const Login = () => {
       } else if (userRole === 'job_seeker') {
         navigate("/dashboard");
       } else {
-        // Default fallback
         navigate("/");
       }
     }
@@ -50,7 +47,6 @@ const Login = () => {
     setIsLoading(true);
     try {
       await signIn(values.email, values.password);
-      // Redirect will happen in the useEffect based on role
     } catch (error: any) {
       console.error("Login error:", error);
       toast.error(error.message || "Failed to sign in");
@@ -59,7 +55,6 @@ const Login = () => {
     }
   };
 
-  // Don't redirect here - let the useEffect handle redirects after userRole is loaded
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
