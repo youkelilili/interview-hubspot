@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -6,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarIcon, BriefcaseIcon, ClockIcon, BookmarkIcon } from "lucide-react";
+import { CalendarIcon, BriefcaseIcon, ClockIcon, BookmarkIcon, LogOutIcon } from "lucide-react";
+import { toast } from "sonner";
 
 interface JobListing {
   id: string;
@@ -18,7 +18,7 @@ interface JobListing {
 }
 
 const JobSeekerDashboard = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const [recentJobs, setRecentJobs] = useState<JobListing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,11 +50,30 @@ const JobSeekerDashboard = () => {
     fetchRecentJobs();
   }, []);
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success("Logged out successfully");
+    } catch (err) {
+      toast.error("Failed to sign out");
+    }
+  };
+
   return (
     <div className="container mx-auto p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Welcome back, {profile?.first_name || "Job Seeker"}</h1>
-        <p className="text-gray-600">Here's an overview of your job search progress</p>
+      <div className="mb-8 flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Welcome back, {profile?.first_name || "Job Seeker"}</h1>
+          <p className="text-gray-600">Here's an overview of your job search progress</p>
+        </div>
+        <Button 
+          variant="outline" 
+          className="flex items-center gap-2" 
+          onClick={handleSignOut}
+        >
+          <LogOutIcon className="w-4 h-4" />
+          Sign Out
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
