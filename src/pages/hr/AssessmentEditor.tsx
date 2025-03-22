@@ -785,4 +785,3 @@ const AssessmentEditor = () => {
 };
 
 export default AssessmentEditor;
-
