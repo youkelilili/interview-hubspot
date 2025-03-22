@@ -9,6 +9,125 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      assessment_questions: {
+        Row: {
+          assessment_id: string
+          expected_answer: string | null
+          id: string
+          options: Json | null
+          points: number
+          question_order: number
+          question_text: string
+          question_type: string
+        }
+        Insert: {
+          assessment_id: string
+          expected_answer?: string | null
+          id?: string
+          options?: Json | null
+          points?: number
+          question_order?: number
+          question_text: string
+          question_type: string
+        }
+        Update: {
+          assessment_id?: string
+          expected_answer?: string | null
+          id?: string
+          options?: Json | null
+          points?: number
+          question_order?: number
+          question_text?: string
+          question_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_questions_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessments: {
+        Row: {
+          assessment_type: string
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assessment_type: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assessment_type?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      candidate_responses: {
+        Row: {
+          ai_feedback: string | null
+          ai_score: number | null
+          candidate_response: string | null
+          created_at: string
+          id: string
+          interview_assessment_id: string
+          question_id: string
+          updated_at: string
+        }
+        Insert: {
+          ai_feedback?: string | null
+          ai_score?: number | null
+          candidate_response?: string | null
+          created_at?: string
+          id?: string
+          interview_assessment_id: string
+          question_id: string
+          updated_at?: string
+        }
+        Update: {
+          ai_feedback?: string | null
+          ai_score?: number | null
+          candidate_response?: string | null
+          created_at?: string
+          id?: string
+          interview_assessment_id?: string
+          question_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_responses_interview_assessment_id_fkey"
+            columns: ["interview_assessment_id"]
+            isOneToOne: false
+            referencedRelation: "interview_assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_responses_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       candidates: {
         Row: {
           applied_date: string | null
@@ -47,6 +166,47 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      interview_assessments: {
+        Row: {
+          assessment_id: string
+          created_at: string
+          id: string
+          interview_id: string
+          notes: string | null
+          scheduled_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assessment_id: string
+          created_at?: string
+          id?: string
+          interview_id: string
+          notes?: string | null
+          scheduled_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assessment_id?: string
+          created_at?: string
+          id?: string
+          interview_id?: string
+          notes?: string | null
+          scheduled_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interview_assessments_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       jobs: {
         Row: {
