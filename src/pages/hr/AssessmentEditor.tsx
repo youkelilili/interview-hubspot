@@ -112,15 +112,21 @@ const AssessmentEditor = () => {
         if (questionsError) throw questionsError;
 
         if (questionsData) {
-          setQuestions(questionsData.map(q => ({
+          // Convert the data to the expected format
+          const formattedQuestions: AssessmentQuestion[] = questionsData.map(q => ({
             id: q.id,
             questionText: q.question_text,
             questionType: q.question_type as "multiple_choice" | "text" | "coding",
-            options: q.options,
+            options: q.options ? (Array.isArray(q.options) 
+              ? q.options as { text: string; isCorrect: boolean }[]
+              : [{ text: String(q.options), isCorrect: true }]) 
+              : undefined,
             expectedAnswer: q.expected_answer || '',
             points: q.points,
             questionOrder: q.question_order
-          })));
+          }));
+          
+          setQuestions(formattedQuestions);
         }
       }
     } catch (error) {
@@ -779,3 +785,4 @@ const AssessmentEditor = () => {
 };
 
 export default AssessmentEditor;
+

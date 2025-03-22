@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminLayout from "@/components/layouts/AdminLayout";
@@ -42,15 +41,6 @@ import { toast } from "sonner";
 import { PlusCircle, Edit, Trash2, FileText, Copy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-interface Assessment {
-  id: string;
-  title: string;
-  description: string;
-  assessmentType: "technical" | "behavioral";
-  created_at: string;
-  questions: AssessmentQuestion[];
-}
-
 interface AssessmentQuestion {
   id: string;
   questionText: string;
@@ -59,6 +49,15 @@ interface AssessmentQuestion {
   expectedAnswer?: string;
   points: number;
   questionOrder: number;
+}
+
+interface Assessment {
+  id: string;
+  title: string;
+  description: string;
+  assessmentType: "technical" | "behavioral";
+  created_at: string;
+  questions: AssessmentQuestion[];
 }
 
 const AssessmentManagement = () => {
@@ -102,15 +101,19 @@ const AssessmentManagement = () => {
 
             if (questionsError) console.error('Error fetching questions:', questionsError);
 
-            const questions = questionsData?.map(q => ({
+            // Properly convert the questions data
+            const questions: AssessmentQuestion[] = (questionsData || []).map(q => ({
               id: q.id,
               questionText: q.question_text,
-              questionType: q.question_type,
-              options: q.options,
-              expectedAnswer: q.expected_answer,
+              questionType: q.question_type as "multiple_choice" | "text" | "coding",
+              options: q.options ? (Array.isArray(q.options) 
+                ? q.options as { text: string; isCorrect: boolean }[]
+                : [{ text: String(q.options), isCorrect: true }])
+                : undefined,
+              expectedAnswer: q.expected_answer || '',
               points: q.points,
               questionOrder: q.question_order
-            })) || [];
+            }));
 
             return {
               id: assessment.id,
