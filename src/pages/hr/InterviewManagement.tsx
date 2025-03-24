@@ -48,14 +48,14 @@ interface Interview {
   candidate_name: string;
   position: string;
   date: string;
-  status: "Scheduled" | "In Progress" | "Completed" | "Canceled";
+  status: string; // Changed from enum to string to match database type
   interviewers?: User[];
   assessments?: Assessment[];
 }
 
 interface User {
   id: string;
-  email: string;
+  email?: string; // Made optional since profiles table doesn't have email
   first_name: string | null;
   last_name: string | null;
 }
@@ -126,17 +126,22 @@ const InterviewManagement = () => {
           
           // Get full user data for each interviewer
           const userIds = interviewersData.map(item => item.user_id);
-          const { data: usersData, error: usersError } = await supabase
-            .from('profiles')
-            .select('id, first_name, last_name')
-            .in('id', userIds);
+          let interviewers: User[] = [];
           
-          if (usersError) throw usersError;
+          if (userIds.length > 0) {
+            const { data: usersData, error: usersError } = await supabase
+              .from('profiles')
+              .select('id, first_name, last_name')
+              .in('id', userIds);
+            
+            if (usersError) throw usersError;
+            interviewers = usersData as User[];
+          }
           
           return {
             ...interview,
-            interviewers: usersData,
-          };
+            interviewers: interviewers,
+          } as Interview;
         })
       );
       
@@ -154,11 +159,11 @@ const InterviewManagement = () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, first_name, last_name');
+        .select('id, first_name, last_name');
       
       if (error) throw error;
       
-      setUsers(data || []);
+      setUsers(data as User[]);
     } catch (error) {
       console.error("Error fetching users:", error);
       toast.error("Failed to load users");
