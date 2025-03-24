@@ -50,20 +50,11 @@ type UserRole = "admin" | "hr" | "job_seeker";
 
 type UserProfile = {
   id: string;
-  email: string;
+  email?: string;
   first_name: string | null;
   last_name: string | null;
   role: UserRole;
-  created_at: string;
-};
-
-// Define a type for the auth users list response
-type AuthUsersList = {
-  users: Array<{
-    id: string;
-    email?: string;
-    created_at?: string;
-  }>;
+  created_at?: string;
 };
 
 const UserManagement = () => {
@@ -87,7 +78,7 @@ const UserManagement = () => {
     try {
       setIsLoading(true);
       
-      // Get all users with their profiles
+      // Get profiles from the profiles table
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("*");
@@ -96,30 +87,18 @@ const UserManagement = () => {
         throw profilesError;
       }
       
-      // Get all auth users (admin only)
-      const { data: authUsersData, error: authError } = await supabase.auth.admin.listUsers();
+      // Get emails from auth.users table is not possible from client-side
+      // We'll use only what's available in the profiles table
+      const formattedUsers = profiles.map(profile => ({
+        id: profile.id,
+        first_name: profile.first_name,
+        last_name: profile.last_name,
+        role: profile.role,
+        // We don't have emails from client side, so we'll display a placeholder
+        email: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User',
+      }));
       
-      if (authError) {
-        throw authError;
-      }
-      
-      // Fix: Properly type the auth users data
-      const authUsers = authUsersData as unknown as AuthUsersList;
-      
-      // Combine the data
-      const combinedUsers = profiles.map(profile => {
-        const authUser = authUsers.users.find(u => u.id === profile.id);
-        return {
-          id: profile.id,
-          email: authUser?.email || "No email",
-          first_name: profile.first_name,
-          last_name: profile.last_name,
-          role: profile.role,
-          created_at: authUser?.created_at || "",
-        };
-      });
-      
-      setUsers(combinedUsers);
+      setUsers(formattedUsers);
     } catch (error: any) {
       console.error("Error fetching users:", error);
       toast.error(error.message || "Failed to fetch users");
@@ -144,42 +123,11 @@ const UserManagement = () => {
         return;
       }
       
-      // Create new user
-      const { data, error } = await supabase.auth.admin.createUser({
-        email: newUser.email,
-        password: newUser.password,
-        email_confirm: true,
-        user_metadata: {
-          first_name: newUser.first_name,
-          last_name: newUser.last_name,
-          role: newUser.role,
-        },
-      });
-      
-      if (error) {
-        throw error;
-      }
-      
-      // Update profile with role
-      await supabase
-        .from("profiles")
-        .update({
-          first_name: newUser.first_name,
-          last_name: newUser.last_name,
-          role: newUser.role,
-        })
-        .eq("id", data.user.id);
-      
-      toast.success("User created successfully");
+      // We can't create users from client side using admin API
+      // Let's show a message that this feature needs a server function
+      toast.error("Adding users requires a server-side function. This feature is not available in the client-side app.");
       setIsAddDialogOpen(false);
-      setNewUser({
-        email: "",
-        password: "",
-        first_name: "",
-        last_name: "",
-        role: "job_seeker",
-      });
-      fetchUsers();
+      
     } catch (error: any) {
       console.error("Error creating user:", error);
       toast.error(error.message || "Failed to create user");
@@ -222,15 +170,9 @@ const UserManagement = () => {
         return;
       }
       
-      // Delete user
-      const { error } = await supabase.auth.admin.deleteUser(userId);
+      // We can't delete users from client side
+      toast.error("Deleting users requires a server-side function. This feature is not available in the client-side app.");
       
-      if (error) {
-        throw error;
-      }
-      
-      toast.success("User deleted successfully");
-      fetchUsers();
     } catch (error: any) {
       console.error("Error deleting user:", error);
       toast.error(error.message || "Failed to delete user");
@@ -264,7 +206,7 @@ const UserManagement = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Email</TableHead>
+                    <TableHead>User</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead className="w-24">Actions</TableHead>
@@ -413,11 +355,11 @@ const UserManagement = () => {
           {editingUser && (
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="editEmail">Email</Label>
+                <Label htmlFor="editEmail">User</Label>
                 <Input
                   id="editEmail"
-                  type="email"
-                  value={editingUser.email}
+                  type="text"
+                  value={editingUser.email || ''}
                   disabled
                 />
               </div>
