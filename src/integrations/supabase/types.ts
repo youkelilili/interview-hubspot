@@ -208,6 +208,62 @@ export type Database = {
           },
         ]
       }
+      interview_interviewers: {
+        Row: {
+          id: string
+          interview_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          interview_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          interview_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interview_interviewers_interview_id_fkey"
+            columns: ["interview_id"]
+            isOneToOne: false
+            referencedRelation: "interviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      interviews: {
+        Row: {
+          candidate_name: string
+          created_at: string
+          date: string
+          id: string
+          position: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          candidate_name: string
+          created_at?: string
+          date: string
+          id?: string
+          position: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          candidate_name?: string
+          created_at?: string
+          date?: string
+          id?: string
+          position?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       jobs: {
         Row: {
           benefits: string | null
