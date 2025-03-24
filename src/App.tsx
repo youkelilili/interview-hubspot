@@ -25,6 +25,7 @@ import JobManagement from "./pages/hr/JobManagement";
 import InterviewManagement from "./pages/hr/InterviewManagement";
 import AssessmentManagement from "./pages/hr/AssessmentManagement";
 import AssessmentEditor from "./pages/hr/AssessmentEditor";
+import ExamBank from "./pages/hr/ExamBank";  // Import the ExamBank page
 
 // JobSeeker pages
 import JobSeekerDashboard from "./pages/jobseeker/JobSeekerDashboard";
@@ -95,6 +96,11 @@ const App = () => (
             <Route path="/hr/assessments/:id/edit" element={
               <ProtectedRoute allowedRoles={['admin', 'hr']}>
                 <AssessmentEditor />
+              </ProtectedRoute>
+            } />
+            <Route path="/hr/exams" element={
+              <ProtectedRoute allowedRoles={['admin', 'hr']}>
+                <ExamBank />
               </ProtectedRoute>
             } />
             

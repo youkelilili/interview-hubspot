@@ -11,7 +11,9 @@ import {
   ChevronLeft,
   LogOut,
   BriefcaseBusiness,
-  Calendar
+  Calendar,
+  Book,
+  FileText
 } from "lucide-react";
 import {
   Sheet,
@@ -74,6 +76,18 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: "Interviews",
       href: "/hr/interviews",
       icon: <Calendar className="h-5 w-5" />,
+      roles: ['admin', 'hr'],
+    },
+    {
+      name: "Assessments",
+      href: "/hr/assessments",
+      icon: <FileText className="h-5 w-5" />,
+      roles: ['admin', 'hr'],
+    },
+    {
+      name: "Exam Bank",
+      href: "/hr/exams",
+      icon: <Book className="h-5 w-5" />,
       roles: ['admin', 'hr'],
     },
   ];
