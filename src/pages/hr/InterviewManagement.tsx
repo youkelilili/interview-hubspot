@@ -29,7 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { PlusCircle, FileText, Calendar, User, RefreshCcw } from "lucide-react";
+import { PlusCircle, FileText, Calendar, User, RefreshCcw, Book, BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useForm } from "react-hook-form";
@@ -51,6 +51,7 @@ interface Interview {
   status: string; // Changed from enum to string to match database type
   interviewers?: User[];
   assessments?: Assessment[];
+  exams?: Exam[];
 }
 
 interface User {
@@ -67,11 +68,19 @@ interface Assessment {
   status?: "pending" | "in_progress" | "completed" | "canceled";
 }
 
+interface Exam {
+  id: string;
+  title: string;
+  difficulty: string;
+  category: string;
+}
+
 interface InterviewFormValues {
   candidate_name: string;
   position: string;
   date: string;
   interviewer_ids: string[];
+  exam_id?: string;
 }
 
 const InterviewManagement = () => {
@@ -79,10 +88,13 @@ const InterviewManagement = () => {
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [availableAssessments, setAvailableAssessments] = useState<Assessment[]>([]);
+  const [availableExams, setAvailableExams] = useState<Exam[]>([]);
   const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);
   const [selectedAssessment, setSelectedAssessment] = useState<string>("");
+  const [selectedExam, setSelectedExam] = useState<string>("");
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
+  const [isExamModalOpen, setIsExamModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -92,14 +104,16 @@ const InterviewManagement = () => {
       position: "",
       date: "",
       interviewer_ids: [],
+      exam_id: undefined,
     },
   });
 
-  // Fetch interviews, users and assessments from the database
+  // Fetch interviews, users, assessments and exams from the database
   useEffect(() => {
     fetchInterviews();
     fetchUsers();
     fetchAssessments();
+    fetchExams();
   }, []);
 
   const fetchInterviews = async () => {
@@ -114,9 +128,10 @@ const InterviewManagement = () => {
       
       if (interviewsError) throw interviewsError;
       
-      // For each interview, fetch its interviewers
-      const interviewsWithInterviewers = await Promise.all(
+      // For each interview, fetch its interviewers and exams
+      const interviewsWithDetails = await Promise.all(
         interviewsData.map(async (interview) => {
+          // Fetch interviewers
           const { data: interviewersData, error: interviewersError } = await supabase
             .from('interview_interviewers')
             .select('user_id')
@@ -138,14 +153,44 @@ const InterviewManagement = () => {
             interviewers = usersData as User[];
           }
           
+          // Fetch assigned exams
+          const { data: examsData, error: examsError } = await supabase
+            .from('interview_exams')
+            .select('exam_id')
+            .eq('interview_id', interview.id);
+            
+          if (examsError) {
+            console.error("Error fetching exam assignments:", examsError);
+            return {
+              ...interview,
+              interviewers,
+              exams: [],
+            } as Interview;
+          }
+            
+          // Get full exam data
+          let exams: Exam[] = [];
+          if (examsData && examsData.length > 0) {
+            const examIds = examsData.map(item => item.exam_id);
+            const { data: examDetails, error: examDetailsError } = await supabase
+              .from('exam_bank')
+              .select('id, title, difficulty, category')
+              .in('id', examIds);
+              
+            if (!examDetailsError && examDetails) {
+              exams = examDetails as Exam[];
+            }
+          }
+          
           return {
             ...interview,
-            interviewers: interviewers,
+            interviewers,
+            exams,
           } as Interview;
         })
       );
       
-      setInterviews(interviewsWithInterviewers);
+      setInterviews(interviewsWithDetails);
     } catch (error) {
       console.error("Error fetching interviews:", error);
       toast.error("Failed to load interviews");
@@ -191,6 +236,23 @@ const InterviewManagement = () => {
     }
   };
 
+  const fetchExams = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('exam_bank')
+        .select('id, title, difficulty, category');
+      
+      if (error) throw error;
+      
+      if (data) {
+        setAvailableExams(data as Exam[]);
+      }
+    } catch (error) {
+      console.error("Error fetching exams:", error);
+      toast.error("Failed to load exams");
+    }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString() + " " + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -229,6 +291,21 @@ const InterviewManagement = () => {
           .insert(interviewerInserts);
         
         if (interviewersError) throw interviewersError;
+      }
+      
+      // Assign exam if selected
+      if (values.exam_id) {
+        const { error: examError } = await supabase
+          .from('interview_exams')
+          .insert({
+            interview_id: interview.id,
+            exam_id: values.exam_id
+          });
+        
+        if (examError) {
+          console.error("Error assigning exam:", examError);
+          toast.error("Interview scheduled but exam assignment failed");
+        }
       }
       
       toast.success("Interview scheduled successfully");
@@ -279,9 +356,56 @@ const InterviewManagement = () => {
     }
   };
 
+  const handleAddExam = async () => {
+    if (selectedInterview && selectedExam) {
+      try {
+        const { error } = await supabase
+          .from('interview_exams')
+          .insert({
+            interview_id: selectedInterview.id,
+            exam_id: selectedExam
+          });
+          
+        if (error) throw error;
+        
+        // Update local state
+        const updatedInterviews = interviews.map(interview => {
+          if (interview.id === selectedInterview.id) {
+            const exam = availableExams.find(e => e.id === selectedExam);
+            if (exam) {
+              return {
+                ...interview,
+                exams: [
+                  ...(interview.exams || []),
+                  exam
+                ]
+              };
+            }
+          }
+          return interview;
+        });
+        
+        setInterviews(updatedInterviews);
+        toast.success("Exam assigned to interview");
+        setIsExamModalOpen(false);
+        setSelectedExam("");
+      } catch (error) {
+        console.error("Error assigning exam:", error);
+        toast.error("Failed to assign exam");
+      }
+    } else {
+      toast.error("Please select an exam");
+    }
+  };
+
   const openAssessmentModal = (interview: Interview) => {
     setSelectedInterview(interview);
     setIsAssessmentModalOpen(true);
+  };
+
+  const openExamModal = (interview: Interview) => {
+    setSelectedInterview(interview);
+    setIsExamModalOpen(true);
   };
 
   const refreshData = () => {
@@ -298,6 +422,23 @@ const InterviewManagement = () => {
       return user.email;
     } else {
       return `User ${user.id.slice(0, 8)}`;
+    }
+  };
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'Beginner': return 'bg-green-100 text-green-800';
+      case 'Intermediate': return 'bg-blue-100 text-blue-800';
+      case 'Advanced': return 'bg-purple-100 text-purple-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'Technical': return 'bg-indigo-100 text-indigo-800';
+      case 'Behavioral': return 'bg-amber-100 text-amber-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -418,6 +559,36 @@ const InterviewManagement = () => {
                         </FormItem>
                       )}
                     />
+                    <FormField
+                      control={form.control}
+                      name="exam_id"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Assign Exam (Optional)</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select an exam" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {availableExams.map((exam) => (
+                                <SelectItem 
+                                  key={exam.id} 
+                                  value={exam.id}
+                                >
+                                  {exam.title} ({exam.category}, {exam.difficulty})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <DialogFooter>
                       <Button type="submit" disabled={isLoading}>
                         {isLoading ? "Scheduling..." : "Schedule"}
@@ -455,6 +626,7 @@ const InterviewManagement = () => {
                   <TableHead>Interviewers</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Assessments</TableHead>
+                  <TableHead>Exams</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -526,6 +698,37 @@ const InterviewManagement = () => {
                       </div>
                     </TableCell>
                     <TableCell>
+                      <div className="flex flex-col gap-1">
+                        {interview.exams && interview.exams.length > 0 ? (
+                          interview.exams.map((exam, index) => (
+                            <div key={index} className="flex items-center gap-1">
+                              <BookOpen className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-xs">{exam.title}</span>
+                              <div className="flex gap-1 ml-1">
+                                <span className={`px-1.5 py-0.5 rounded-full text-xs ${getDifficultyColor(exam.difficulty)}`}>
+                                  {exam.difficulty}
+                                </span>
+                                <span className={`px-1.5 py-0.5 rounded-full text-xs ${getCategoryColor(exam.category)}`}>
+                                  {exam.category}
+                                </span>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <span className="text-xs text-gray-500">No exams</span>
+                        )}
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="mt-1 h-6 text-xs"
+                          onClick={() => openExamModal(interview)}
+                        >
+                          <PlusCircle className="h-3 w-3 mr-1" />
+                          Add Exam
+                        </Button>
+                      </div>
+                    </TableCell>
+                    <TableCell>
                       <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm">View</Button>
                         <Button variant="outline" size="sm">Edit</Button>
@@ -573,6 +776,45 @@ const InterviewManagement = () => {
           <DialogFooter>
             <Button onClick={handleAddAssessment} disabled={!selectedAssessment}>
               Assign Assessment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Exam Assignment Modal */}
+      <Dialog open={isExamModalOpen} onOpenChange={setIsExamModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Exam to Interview</DialogTitle>
+            <DialogDescription>
+              {selectedInterview && (
+                <>Assign an exam to {selectedInterview.candidate_name}'s interview.</>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="exam">Select Exam</Label>
+              <Select 
+                value={selectedExam} 
+                onValueChange={setSelectedExam}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an exam" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableExams.map((exam) => (
+                    <SelectItem key={exam.id} value={exam.id}>
+                      {exam.title} ({exam.category}, {exam.difficulty})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleAddExam} disabled={!selectedExam}>
+              Assign Exam
             </Button>
           </DialogFooter>
         </DialogContent>
